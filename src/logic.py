@@ -44,39 +44,40 @@ class Logic:
             if process.name() == name:
                 return process
 
-    def monitor_editor_toggle(self) -> None:
-        self.editor_process: Process | None = self.get_process_by_name(
-            name=self.choose_editor()
-        )
-        self.wakapi_process: Process | None = self.get_process_by_name(
-            name=self.app_to_run
-        )
+    def run(self) -> None:
+        while True:
+            self.editor_process: Process | None = self.get_process_by_name(
+                name=self.choose_editor()
+            )
+            self.wakapi_process: Process | None = self.get_process_by_name(
+                name=f"{self.app_to_run}{self.suffix}"
+            )
 
-        if self.editor_process:
-            if not self.wakapi_is_running:
-                subprocess.Popen(
-                    [
-                        f"{self.app_to_run}{self.suffix}",
-                        "--config",
-                        f"{self.wakapi_config_path}",
-                    ],
-                )
-                self.wakapi_is_running = True
+            if self.editor_process:
+                if not self.wakapi_is_running:
+                    subprocess.Popen(
+                        [
+                            f"{self.app_to_run}{self.suffix}",
+                            "--config",
+                            f"{self.wakapi_config_path}",
+                        ],
+                    )
+                    self.wakapi_is_running = True
 
-        else:
-            if self.wakapi_process:
-                self.wakapi_process.terminate()
+            else:
+                if self.wakapi_process:
+                    self.wakapi_process.terminate()
 
-            self.wakapi_is_running = False
+                self.wakapi_is_running = False
 
-        sleep(self.timeout)
+            sleep(self.timeout)
 
 
-app = Logic(
-    editor="Code",
-    wakapi_config_path=Path("~/wakapi/config.yml").expanduser().resolve(),
-    timeout=0.5,
-)
+if __name__ == "__main__":
+    app = Logic(
+        editor="Code",
+        wakapi_config_path=Path("~/wakapi/config.yml").expanduser().resolve(),
+        timeout=0.5,
+    )
 
-while True:
-    app.monitor_editor_toggle()
+    app.run()
