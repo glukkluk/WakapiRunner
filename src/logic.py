@@ -17,6 +17,8 @@ class Logic:
         self.wakapi_config_path: Path = wakapi_config_path
         self.timeout: float = timeout
 
+        self.wakapi_process = None
+
         match platform.system():
             case "Windows":
                 self.suffix = ".exe"
@@ -71,6 +73,9 @@ class Logic:
                 self.wakapi_is_running = False
 
             sleep(self.timeout)
+
+    def stop(self):
+        self.wakapi_process.kill()
 
 
 if __name__ == "__main__":
