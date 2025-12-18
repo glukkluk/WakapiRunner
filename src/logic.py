@@ -75,7 +75,8 @@ class Logic:
             sleep(self.timeout)
 
     def stop(self):
-        self.wakapi_process.kill()
+        if self.wakapi_process:
+            self.wakapi_process.kill()
 
 
 if __name__ == "__main__":
