@@ -14,6 +14,7 @@ class Logic:
         self.app_to_run = "wakapi"
 
         self.editor: str = editor
+
         self.wakapi_config_path: Path = wakapi_config_path
         self.timeout: float = timeout
 
@@ -32,24 +33,27 @@ class Logic:
             case _:
                 raise Exception("Not supported OS.")
 
-        self.wakapi_is_running = False
-
-    def choose_editor(self) -> str | None:
-        if self.editor in SupportedEditors:
-            return f"{self.editor}{self.suffix}"
-
-        else:
+        if self.editor not in SupportedEditors:
             raise Exception("Not supported editor.")
 
-    def get_process_by_name(self, name) -> Process | None:
-        for process in process_iter():
-            if process.name() == name:
+        self.editor_exec = self.editor + self.suffix
+
+        self.wakapi_is_running = False
+        self.run_polling = False
+
+    def get_process_by_name(self, name: str) -> Process | None:
+        for process in process_iter(attrs=["name"]):
+            if process.info.get("name") == name:
                 return process
 
     def run(self) -> None:
-        while True:
+        print("🚩 Wakapi polling was started")
+
+        self.run_polling = True
+
+        while self.run_polling:
             self.editor_process: Process | None = self.get_process_by_name(
-                name=self.choose_editor()
+                name=self.editor_exec
             )
             self.wakapi_process: Process | None = self.get_process_by_name(
                 name=f"{self.app_to_run}{self.suffix}"
@@ -66,24 +70,23 @@ class Logic:
                     )
                     self.wakapi_is_running = True
 
-            else:
-                if self.wakapi_process:
-                    self.wakapi_process.terminate()
+                    print("🚩 Wakapi was started")
 
-                self.wakapi_is_running = False
+            else:
+                self.stop(message=f"🚩 Editor {self.editor} is not running")
 
             sleep(self.timeout)
 
-    def stop(self):
+    def stop(
+        self, stop_polling: bool = False, message: str = "🚩 Wakapi polling was stopped"
+    ) -> None:
         if self.wakapi_process:
             self.wakapi_process.kill()
+            self.wakapi_process = None
 
+        self.wakapi_is_running = False
 
-if __name__ == "__main__":
-    app = Logic(
-        editor="Code",
-        wakapi_config_path=Path("~/wakapi/config.yml").expanduser().resolve(),
-        timeout=0.5,
-    )
+        print(message)
 
-    app.run()
+        if stop_polling:
+            self.run_polling = False
