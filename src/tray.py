@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from threading import Thread
 
-from PIL import Image, ImageDraw
+from PIL import Image
 from pystray import Icon, Menu, MenuItem
 
 from logic import Logic
@@ -12,10 +12,10 @@ if TYPE_CHECKING:
 
 
 class Tray(Icon):
-    def __init__(self, name, icon_params, logic: Logic):
+    def __init__(self, name, logic: Logic):
         super().__init__(
             name=name,
-            icon=self.create_icon(*icon_params),
+            icon=Image.open("src/assets/images/logo.png"),
             menu=self.create_menu(),
         )
         self.logic: Logic = logic
@@ -40,15 +40,6 @@ class Tray(Icon):
 
     def change_buttons_visible(self, item):
         return item.text == ("Stop" if self.is_running else "Start")
-
-    def create_icon(self, width: int, height: int, color1: str, color2: str):
-        image = Image.new("RGB", (width, height), color1)
-        dc = ImageDraw.Draw(image)
-
-        dc.rectangle((width // 2, 0, width, height // 2), color2)
-        dc.rectangle((0, height // 2, width // 2, height), color2)
-
-        return image
 
     def create_menu(self):
         self.start_button = MenuItem(
