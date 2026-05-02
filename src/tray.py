@@ -28,7 +28,7 @@ class Tray(Icon):
     def buttons_actions(self, icon, item):
         match item.text:
             case "Start":
-                self.start_polling()
+                self.start_polling(message="🚩 Wakapi polling was started by user")
 
             case "Stop":
                 self.stop_polling()
@@ -36,7 +36,7 @@ class Tray(Icon):
             case "Quit":
                 self.stop_polling()
                 icon.stop()
-                print("🚩 Tray app was stopped")
+                print("❌ Tray app was stopped")
 
     def change_buttons_visible(self, item):
         return item.text == ("Stop" if self.is_running else "Start")
@@ -64,14 +64,21 @@ class Tray(Icon):
 
         return main_menu
 
-    def start_polling(self):
+    def start_polling(self, message: str | None = None):
         if not self.logic_thread:
-            self.logic_thread = Thread(target=self.logic.run)
+            self.logic_thread = Thread(
+                target=self.logic.run, args=(message,) if message else ()
+            )
             self.logic_thread.start()
 
         self.is_running = True
 
     def stop_polling(self):
-        self.logic.stop(stop_polling=True)
+        if self.logic.wakapi_process:
+            message = "⏱️ Wakapi polling was stopped by user. Wakapi was stopped."
+        else:
+            message = "⏱️ Wakapi polling was stopped by user."
+
+        self.logic.stop(message=message, stop_polling=True)
         self.logic_thread = None
         self.is_running = False
