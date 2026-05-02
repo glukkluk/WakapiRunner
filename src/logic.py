@@ -6,8 +6,6 @@ from time import sleep
 
 from psutil import Process, process_iter
 
-SupportedEditors: list[str] = ["Code", "Code - Insiders", "pycharm64"]
-
 
 class Logic:
     def __init__(self, editor: str, wakapi_config_path: Path, timeout: float) -> None:
@@ -33,12 +31,8 @@ class Logic:
             case _:
                 raise Exception("Not supported OS.")
 
-        if self.editor not in SupportedEditors:
-            raise Exception("Not supported editor.")
-
         self.editor_exec = self.editor + self.suffix
 
-        self.wakapi_is_running = False
         self.run_polling = False
 
     def get_process_by_name(self, name: str) -> Process | None:
@@ -46,8 +40,8 @@ class Logic:
             if process.info.get("name") == name:
                 return process
 
-    def run(self) -> None:
-        print("🚩 Wakapi polling was started")
+    def run(self, message: str = "🚩 Wakapi polling was started") -> None:
+        print(message)
 
         self.run_polling = True
 
@@ -60,31 +54,32 @@ class Logic:
             )
 
             if self.editor_process:
-                if not self.wakapi_is_running:
+                if self.wakapi_process is None:
                     subprocess.Popen(
                         [
                             f"{self.app_to_run}{self.suffix}",
                             "--config",
-                            f"{self.wakapi_config_path}",
+                            str(self.wakapi_config_path),
                         ],
                     )
-                    self.wakapi_is_running = True
-
-                    print("🚩 Wakapi was started")
+                    print("✅ Wakapi was started")
 
             else:
-                self.stop(message=f"🚩 Editor {self.editor} is not running")
+                if self.wakapi_process:
+                    self.stop(
+                        message=f"🚫 Wakapi was stopped. Editor <{self.editor}> is not running."
+                    )
 
             sleep(self.timeout)
 
     def stop(
-        self, stop_polling: bool = False, message: str = "🚩 Wakapi polling was stopped"
+        self,
+        message: str,
+        stop_polling: bool = False,
     ) -> None:
         if self.wakapi_process:
             self.wakapi_process.kill()
             self.wakapi_process = None
-
-        self.wakapi_is_running = False
 
         print(message)
 
